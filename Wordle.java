@@ -17,15 +17,12 @@ public class Wordle {
     private static final int MAX_OBJECTS = 4;
     private static final int[] COLOR_POSITIONS = {0, 150, 330, 500}; // Correct position, correct color but wrong position, wrong color, initial position
     private static final int[] CORRECT_SEQUENCE = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
-    private static int[] userSequence = new int[MAX_OBJECTS];
 
     public static void main(String[] args) {
-        int attempts = 0;
-        
         while (true) {
             resetMotors();
+            int[] userSequence = new int[MAX_OBJECTS];
             LCD.clear();
-            LCD.drawString("Attempt: " + attempts, 0, 0);
             int colorCount = 0;
 
             // User scanning loop
@@ -43,7 +40,7 @@ public class Wordle {
 
             // Compare and sort loop
             for (int i = 0; i < MAX_OBJECTS; i++) {
-                compareAndSortColor(i);
+                compareAndSortColor(userSequence, i);
             }
 
             // Reset for next round or exit
@@ -51,26 +48,25 @@ public class Wordle {
                 break; // Exit program
             }
 
-            attempts++;
             LCD.clear();
-            Delay.msDelay(1000);
+            Delay.msDelay(2000); // Wait before the next attempt
         }
     }
 
-    private static void compareAndSortColor(int index) {
+    private static void compareAndSortColor(int[] userSequence, int index) {
         int colorId = userSequence[index];
         int correctColor = CORRECT_SEQUENCE[index];
         int position;
 
         if (colorId == correctColor) {
             position = COLOR_POSITIONS[0]; // Correct color, correct position
-            LCD.drawString(getColorName(colorId) + " is correct at " + index, 0, index + 1);
+            LCD.drawString(getColorName(colorId) + " is correct at " + index, 0, index + 2);
         } else if (containsColor(colorId)) {
             position = COLOR_POSITIONS[1]; // Correct color, wrong position
-            LCD.drawString(getColorName(colorId) + " wrong position", 0, index + 1);
+            LCD.drawString(getColorName(colorId) + " wrong position", 0, index + 2);
         } else {
             position = COLOR_POSITIONS[2]; // Wrong color
-            LCD.drawString(getColorName(colorId) + " is wrong", 0, index + 1);
+            LCD.drawString(getColorName(colorId) + " is wrong", 0, index + 2);
         }
 
         moveToColorPosition(position);
@@ -78,7 +74,6 @@ public class Wordle {
         moveToColorPosition(COLOR_POSITIONS[3]); // Return to initial position
     }
 
-    // Checks if the given color is in the correct sequence
     private static boolean containsColor(int colorId) {
         for (int color : CORRECT_SEQUENCE) {
             if (colorId == color) {
@@ -88,10 +83,37 @@ public class Wordle {
         return false;
     }
 
-    // Reset motors, clear screen, etc.
     private static void resetMotors() {
         beltMotor.resetTachoCount();
     }
 
-    // Method to get color, beepOnce(), moveToColorPosition(int position), getColorName(int colorId) remain the same
+    private static int getColor() {
+        int colorId = colorSensor.getColorID();
+        return colorId;
+    }
+
+    private static void beepOnce() {
+        Sound.playTone(1000, 100);
+    }
+
+    private static void moveToColorPosition(int position) {
+        beltMotor.rotateTo(position, false);
+        while (beltMotor.isMoving()) {
+            Delay.msDelay(100);
+        }
+    }
+
+    private static String getColorName(int colorId) {
+        switch (colorId) {
+            case Color.NONE: return "NONE";
+            case Color.BLACK: return "BLACK";
+            case Color.BLUE: return "BLUE";
+            case Color.GREEN: return "GREEN";
+            case Color.YELLOW: return "YELLOW";
+            case Color.RED: return "RED";
+            case Color.WHITE: return "WHITE";
+            case Color.BROWN: return "BROWN";
+            default: return "UNKNOWN";
+        }
+    }
 }
