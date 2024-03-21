@@ -10,7 +10,7 @@ import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.Color;
 import lejos.utility.Delay;
 
-public class Wordle {
+public class SequenceGame {
     private static EV3LargeRegulatedMotor beltMotor = new EV3LargeRegulatedMotor(MotorPort.D);
     private static EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
 
@@ -95,4 +95,3 @@ public class Wordle {
 
     // Method to get color, beepOnce(), moveToColorPosition(int position), getColorName(int colorId) remain the same
 }
-
