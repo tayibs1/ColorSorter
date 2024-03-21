@@ -1,36 +1,45 @@
-private static int getColor() {
-    int colorId = colorSensor.getColorID();
-    String colorName = ""; // Initialize color name as an empty string
+private static void sortColor(int colorId) {
+    String colorName = getColorName(colorId); // Convert colorId to colorName
+    LCD.clear();
+    LCD.drawString("Sorting Color: " + colorName, 0, 0);
     switch (colorId) {
-        case Color.NONE:
-            colorName = "NONE";
-            break;
-        case Color.BLACK:
-            colorName = "BLACK";
-            break;
-        case Color.BLUE:
-            colorName = "BLUE";
+        case Color.RED:
+            moveToColorPosition(COLOR_POSITIONS[0]);
             break;
         case Color.GREEN:
-            colorName = "GREEN";
+            moveToColorPosition(COLOR_POSITIONS[1]);
+            break;
+        case Color.BLUE:
+            moveToColorPosition(COLOR_POSITIONS[2]);
             break;
         case Color.YELLOW:
-            colorName = "YELLOW";
-            break;
-        case Color.RED:
-            colorName = "RED";
-            break;
-        case Color.WHITE:
-            colorName = "WHITE";
-            break;
-        case Color.BROWN:
-            colorName = "BROWN";
+            moveToColorPosition(COLOR_POSITIONS[3]);
             break;
         default:
-            colorName = "UNKNOWN";
+            LCD.drawString("Unknown Color", 0, 1);
             break;
     }
-    LCD.clear(); // Clear the screen before displaying the new color name
-    LCD.drawString(colorName, 0, 1); // Display the color name on the screen
-    return colorId;
+}
+
+private static String getColorName(int colorId) {
+    switch (colorId) {
+        case Color.NONE:
+            return "NONE";
+        case Color.BLACK:
+            return "BLACK";
+        case Color.BLUE:
+            return "BLUE";
+        case Color.GREEN:
+            return "GREEN";
+        case Color.YELLOW:
+            return "YELLOW";
+        case Color.RED:
+            return "RED";
+        case Color.WHITE:
+            return "WHITE";
+        case Color.BROWN:
+            return "BROWN";
+        default:
+            return "UNKNOWN";
+    }
 }
