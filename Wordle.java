@@ -17,9 +17,35 @@ public class Wordle {
     private static final int MAX_OBJECTS = 4;
     private static final int[] COLOR_POSITIONS = {0, 150, 330, 500}; // Correct position, correct color but wrong position, wrong color, initial position
     private static final int[] CORRECT_SEQUENCE = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
+    private static int tries = 0; 
+    private static int correctCount = 0;
+    private static boolean guessCorrect = false;
 
     public static void main(String[] args) {
-        while (true) {
+        LCD.drawString("Welcome to Lego Wordle!", 0, 0);
+        Delay.msDelay(2000);
+        
+        LCD.drawString("You have four tries to guess", 0, 0); //explanation of game to user for clarity 
+        LCD.drawString("the correct sequence of four colours.", 0, 2);
+        Delay.msDelay(2000);
+
+        LCD.drawString("The robot will scan each colour", 0, 0);
+        LCD.drawString("and sort it based on the following factors:", 0, 2);
+        Delay.msDelay(2000);
+
+        LCD.drawString("Correct colour and correct position:", 0, 0);
+        LCD.drawString("Sorted into left basket", 0, 2);
+        Delay.msDelay(2000);
+
+        LCD.drawString("Correct colour but incorrect position:", 0, 0);
+        LCD.drawString("Sorted into middle basket", 0, 2);
+        Delay.msDelay(2000);
+
+        LCD.drawString("Incorrect colour:", 0, 0);
+        LCD.drawString("Sorted into right basket", 0, 2);
+        Delay.msDelay(2000);
+        
+        while (tries < 4 || guessCorrect == false) {
             resetMotors();
             int[] userSequence = new int[MAX_OBJECTS];
             LCD.clear();
@@ -43,11 +69,31 @@ public class Wordle {
                 compareAndSortColor(userSequence, i);
             }
 
+    
+            LCD.drawString("Your guess: " + userSequence, 0, 0);
+            LCD.drawString("Tries left: " + (4 - tries), 0, 1);
+            resetMotors();
+            beltMotor.rotateTo(COLOR_POSITIONS[0], true); //rotate belt motor back to the start after every guess round 
+            
+
+            if (correctCount == 4) { 
+                LCD.drawString("Well done!", 0, 0);
+                LCD.drawString("You have correctly guessed the color sequence:", 0, 2);
+                LCD.drawString("" + CORRECT_SEQUENCE, 0, 3);
+                guessCorrect = true; //exits while loop and game finishes 
+            } else if ((tries == 4) && (guessCorrect == false)) { //handles scenario of user running out of tries 
+                LCD.drawString("Sorry, you have run out of tries.", 0, 0);
+                LCD.drawString("The correct color sequence was:", 0, 2);
+                LCD.drawString("" + CORRECT_SEQUENCE, 0, 3);
+            }
+                
+
             // Reset for next round or exit
             if (Button.ESCAPE.isDown()) {
                 break; // Exit program
             }
 
+            tries++;
             LCD.clear();
             Delay.msDelay(2000); // Wait before the next attempt
         }
@@ -60,6 +106,7 @@ public class Wordle {
 
         if (colorId == correctColor) {
             position = COLOR_POSITIONS[0]; // Correct color, correct position
+            correctCount++;
             LCD.drawString(getColorName(colorId) + " is correct at " + index, 0, index + 2);
         } else if (containsColor(colorId)) {
             position = COLOR_POSITIONS[1]; // Correct color, wrong position
