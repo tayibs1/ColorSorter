@@ -1,7 +1,6 @@
 package pack;
 
 import java.util.Random;
-
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.hardware.ev3.LocalEV3;
@@ -12,7 +11,7 @@ import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.Color;
 import lejos.utility.Delay;
 
-public class Wordle {
+public class ColorSorterRobot {
     private static EV3LargeRegulatedMotor beltMotor = new EV3LargeRegulatedMotor(MotorPort.D);
     private static EV3LargeRegulatedMotor feedMotor = new EV3LargeRegulatedMotor(MotorPort.A);
     private static EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
@@ -22,17 +21,15 @@ public class Wordle {
     private static int[] CORRECT_SEQUENCE;
     private static int tries = 0;
     private static boolean guessCorrect = false;
-    
 
     public static void main(String[] args) {
-    	CORRECT_SEQUENCE = createSequence();
-    	
-        while (tries < 4 && guessCorrect == false) {
+        CORRECT_SEQUENCE = createSequence();
+
+        while (tries < 4 && !guessCorrect) {
             resetMotors();
             int[] userSequence = new int[MAX_OBJECTS];
             LCD.clear();
             int colorCount = 0;
-            
 
             // User scanning loop
             while (colorCount < MAX_OBJECTS && !Button.ENTER.isDown()) {
@@ -67,28 +64,30 @@ public class Wordle {
             for (int i = 0; i < colorCount; i++) {
                 compareAndSortColor(userSequence, i);
                 beltMotor.rotateTo(COLOR_POSITIONS[0]);
-                
             }
+
+            // Display correct sequence
+            LCD.clear();
+            LCD.drawString("Correct sequence:", 0, 0);
+            for (int i = 0; i < CORRECT_SEQUENCE.length; i++) {
+                LCD.drawString(getColorName(CORRECT_SEQUENCE[i]), 0, i + 1);
+            }
+            Delay.msDelay(10000); // Display the correct sequence for a while
 
             // Reset for next round or exit
             if (Button.ESCAPE.isDown()) {
                 break; // Exit program
             }
-            
 
             tries++;
             LCD.clear();
             Delay.msDelay(2000); // Wait before the next attempt
         }
-        LCD.drawString("Sorry, you have run out of tries.", 0, 0);
-        LCD.drawString("The correct color sequence was:", 0, 2);
-        LCD.drawString("" + CORRECT_SEQUENCE, 0, 3);
-        
     }
 
     public static int[] createSequence() {
         int[] sequence = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
-        shuffleArray(sequence); // Randomise the sequence
+        shuffleArray(sequence); // Randomize the sequence
         return sequence;
     }
 
@@ -96,7 +95,7 @@ public class Wordle {
         Random rnd = new Random();
         for (int i = array.length - 1; i > 0; i--) {
             int index = rnd.nextInt(i + 1);
-            //Swap
+            // Swap
             int temp = array[index];
             array[index] = array[i];
             array[i] = temp;
@@ -125,7 +124,6 @@ public class Wordle {
         moveToColorPosition(COLOR_POSITIONS[3]); // Return to initial position
     }
 
-
     private static boolean containsColor(int colorId) {
         for (int color : CORRECT_SEQUENCE) {
             if (colorId == color) {
@@ -141,7 +139,6 @@ public class Wordle {
         feedMotor.rotate(-90); // Rotate back to the original position
     }
 
-
     private static void resetMotors() {
         beltMotor.resetTachoCount();
     }
@@ -154,13 +151,14 @@ public class Wordle {
     private static void beepOnce() {
         Sound.playTone(1000, 100);
     }
-
+    
     private static void moveToColorPosition(int position) {
-        beltMotor.rotateTo(position, false);
+        beltMotor.rotateTo(position, true);
         while (beltMotor.isMoving()) {
             Delay.msDelay(100);
         }
     }
+
 
     private static String getColorName(int colorId) {
         switch (colorId) {
