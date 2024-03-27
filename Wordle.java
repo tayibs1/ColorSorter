@@ -1,5 +1,7 @@
 package pack;
 
+import java.util.Random;
+
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.hardware.ev3.LocalEV3;
@@ -12,93 +14,95 @@ import lejos.utility.Delay;
 
 public class Wordle {
     private static EV3LargeRegulatedMotor beltMotor = new EV3LargeRegulatedMotor(MotorPort.D);
+    private static EV3LargeRegulatedMotor feedMotor = new EV3LargeRegulatedMotor(MotorPort.A);
     private static EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
 
     private static final int MAX_OBJECTS = 4;
-    private static final int[] COLOR_POSITIONS = {0, 150, 330, 500}; // Correct position, correct color but wrong position, wrong color, initial position
-    private static final int[] CORRECT_SEQUENCE = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
-    private static int tries = 0; 
-    private static int correctCount = 0;
+    private static final int[] COLOR_POSITIONS = {0, 250, 450, 500}; // Correct position, correct color but wrong position, wrong color, initial position
+    private static int[] CORRECT_SEQUENCE;
+    private static int tries = 0;
     private static boolean guessCorrect = false;
+    
 
     public static void main(String[] args) {
-        LCD.drawString("Welcome to Lego Wordle!", 0, 0);
-        Delay.msDelay(2000);
-        
-        LCD.drawString("You have four tries to guess", 0, 0); //explanation of game to user for clarity 
-        LCD.drawString("the correct sequence of four colours.", 0, 2);
-        Delay.msDelay(2000);
-
-        LCD.drawString("The robot will scan each colour", 0, 0);
-        LCD.drawString("and sort it based on the following factors:", 0, 2);
-        Delay.msDelay(2000);
-
-        LCD.drawString("Correct colour and correct position:", 0, 0);
-        LCD.drawString("Sorted into left basket", 0, 2);
-        Delay.msDelay(2000);
-
-        LCD.drawString("Correct colour but incorrect position:", 0, 0);
-        LCD.drawString("Sorted into middle basket", 0, 2);
-        Delay.msDelay(2000);
-
-        LCD.drawString("Incorrect colour:", 0, 0);
-        LCD.drawString("Sorted into right basket", 0, 2);
-        Delay.msDelay(2000);
-        
-        while (tries < 4 || guessCorrect == false) {
+    	CORRECT_SEQUENCE = createSequence();
+    	
+        while (tries < 4 && guessCorrect == false) {
             resetMotors();
             int[] userSequence = new int[MAX_OBJECTS];
             LCD.clear();
             int colorCount = 0;
+            
 
             // User scanning loop
             while (colorCount < MAX_OBJECTS && !Button.ENTER.isDown()) {
                 if (Button.ESCAPE.isDown()) {
                     return; // Exit program immediately
                 }
+
+                // Remove the last scanned object if the left button is pressed
+                if (Button.LEFT.isDown()) {
+                    if (colorCount > 0) {
+                        colorCount--;
+                        LCD.clear();
+                        LCD.drawString("Last scan removed", 0, 0);
+                        Delay.msDelay(1000); // Wait a bit for user to see message
+                        LCD.clear();
+                        continue; // Skip scanning and wait for next action
+                    }
+                }
+
                 int color = getColor();
-                if (color != -1) { // -1 means no colour or unrecognised colour
-                    userSequence[colorCount++] = color;
+                if (color != -1) {
+                    userSequence[colorCount] = color;
+                    LCD.clear();
+                    LCD.drawString(getColorName(color), 0, 0);
+                    colorCount++;
                     beepOnce();
                 }
                 Delay.msDelay(1000);
             }
 
             // Compare and sort loop
-            for (int i = 0; i < MAX_OBJECTS; i++) {
+            for (int i = 0; i < colorCount; i++) {
                 compareAndSortColor(userSequence, i);
-            }
-
-    
-            LCD.drawString("Your guess: " + userSequence, 0, 0);
-            LCD.drawString("Tries left: " + (4 - tries), 0, 1);
-            resetMotors();
-            beltMotor.rotateTo(COLOR_POSITIONS[0], true); //rotate belt motor back to the start after every guess round 
-            
-
-            if (correctCount == 4) { 
-                LCD.drawString("Well done!", 0, 0);
-                LCD.drawString("You have correctly guessed the color sequence:", 0, 2);
-                LCD.drawString("" + CORRECT_SEQUENCE, 0, 3);
-                guessCorrect = true; //exits while loop and game finishes 
-            } else if ((tries == 4) && (guessCorrect == false)) { //handles scenario of user running out of tries 
-                LCD.drawString("Sorry, you have run out of tries.", 0, 0);
-                LCD.drawString("The correct color sequence was:", 0, 2);
-                LCD.drawString("" + CORRECT_SEQUENCE, 0, 3);
-            }
+                beltMotor.rotateTo(COLOR_POSITIONS[0]);
                 
+            }
 
             // Reset for next round or exit
             if (Button.ESCAPE.isDown()) {
                 break; // Exit program
             }
+            
 
             tries++;
             LCD.clear();
             Delay.msDelay(2000); // Wait before the next attempt
         }
+        LCD.drawString("Sorry, you have run out of tries.", 0, 0);
+        LCD.drawString("The correct color sequence was:", 0, 2);
+        LCD.drawString("" + CORRECT_SEQUENCE, 0, 3);
+        
     }
 
+    public static int[] createSequence() {
+        int[] sequence = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
+        shuffleArray(sequence); // Randomise the sequence
+        return sequence;
+    }
+
+    private static void shuffleArray(int[] array) {
+        Random rnd = new Random();
+        for (int i = array.length - 1; i > 0; i--) {
+            int index = rnd.nextInt(i + 1);
+            //Swap
+            int temp = array[index];
+            array[index] = array[i];
+            array[i] = temp;
+        }
+    }
+    
     private static void compareAndSortColor(int[] userSequence, int index) {
         int colorId = userSequence[index];
         int correctColor = CORRECT_SEQUENCE[index];
@@ -106,7 +110,6 @@ public class Wordle {
 
         if (colorId == correctColor) {
             position = COLOR_POSITIONS[0]; // Correct color, correct position
-            correctCount++;
             LCD.drawString(getColorName(colorId) + " is correct at " + index, 0, index + 2);
         } else if (containsColor(colorId)) {
             position = COLOR_POSITIONS[1]; // Correct color, wrong position
@@ -118,8 +121,10 @@ public class Wordle {
 
         moveToColorPosition(position);
         Delay.msDelay(500); // Wait for sorting action
+        ejectObject(); // Eject the object
         moveToColorPosition(COLOR_POSITIONS[3]); // Return to initial position
     }
+
 
     private static boolean containsColor(int colorId) {
         for (int color : CORRECT_SEQUENCE) {
@@ -129,6 +134,13 @@ public class Wordle {
         }
         return false;
     }
+    
+    private static void ejectObject() {
+        feedMotor.rotate(90); // Rotate the motor to eject the object
+        Delay.msDelay(500); // Wait for half a second
+        feedMotor.rotate(-90); // Rotate back to the original position
+    }
+
 
     private static void resetMotors() {
         beltMotor.resetTachoCount();
