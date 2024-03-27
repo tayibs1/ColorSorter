@@ -20,68 +20,78 @@ public class ColorSorterRobot {
     private static final int[] COLOR_POSITIONS = {0, 250, 450, 500}; // Correct position, correct color but wrong position, wrong color, initial position
     private static int[] CORRECT_SEQUENCE;
     private static int tries = 0;
+    private static final int MAX_TRIES = 3; // Maximum number of tries
     private static boolean guessCorrect = false;
 
     public static void main(String[] args) {
-        CORRECT_SEQUENCE = createSequence();
-
-        while (tries < 4 && !guessCorrect) {
-            resetMotors();
-            int[] userSequence = new int[MAX_OBJECTS];
+        while (true) { // Allows multiple rounds of guessing
+            CORRECT_SEQUENCE = createSequence();
+            tries = 0; // Reset tries for the new round
+            guessCorrect = false; // Reset guessCorrect for the new round
             LCD.clear();
-            int colorCount = 0;
 
-            // User scanning loop
-            while (colorCount < MAX_OBJECTS && !Button.ENTER.isDown()) {
-                if (Button.ESCAPE.isDown()) {
-                    return; // Exit program immediately
-                }
+            while (tries < MAX_TRIES && !guessCorrect) {
+                resetMotors();
+                int[] userSequence = new int[MAX_OBJECTS];
+                LCD.clear();
+                int colorCount = 0;
 
-                // Remove the last scanned object if the left button is pressed
-                if (Button.LEFT.isDown()) {
-                    if (colorCount > 0) {
-                        colorCount--;
-                        LCD.clear();
-                        LCD.drawString("Last scan removed", 0, 0);
-                        Delay.msDelay(1000); // Wait a bit for user to see message
-                        LCD.clear();
-                        continue; // Skip scanning and wait for next action
+                // User scanning loop
+                while (colorCount < MAX_OBJECTS && !Button.ENTER.isDown()) {
+                    if (Button.ESCAPE.isDown()) {
+                        return; // Exit program immediately
                     }
+
+                    // Remove the last scanned object if the left button is pressed
+                    if (Button.LEFT.isDown()) {
+                        if (colorCount > 0) {
+                            colorCount--;
+                            LCD.clear();
+                            LCD.drawString("Last scan removed", 0, 0);
+                            Delay.msDelay(1000); // Wait a bit for user to see message
+                            LCD.clear();
+                            continue; // Skip scanning and wait for next action
+                        }
+                    }
+
+                    int color = getColor();
+                    if (color != -1) {
+                        userSequence[colorCount] = color;
+                        LCD.clear();
+                        LCD.drawString(getColorName(color), 0, 0);
+                        colorCount++;
+                        beepOnce();
+                    }
+                    Delay.msDelay(1000);
                 }
 
-                int color = getColor();
-                if (color != -1) {
-                    userSequence[colorCount] = color;
-                    LCD.clear();
-                    LCD.drawString(getColorName(color), 0, 0);
-                    colorCount++;
-                    beepOnce();
+                // Compare and sort loop
+                for (int i = 0; i < colorCount; i++) {
+                    compareAndSortColor(userSequence, i);
+                    beltMotor.rotateTo(COLOR_POSITIONS[0]);
                 }
-                Delay.msDelay(1000);
+
+                // Check guess correctness here (Implement your logic)
+                guessCorrect = checkGuess(userSequence);
+                tries++;
+
+                // Wait a bit before next attempt
+                Delay.msDelay(2000);
             }
 
-            // Compare and sort loop
-            for (int i = 0; i < colorCount; i++) {
-                compareAndSortColor(userSequence, i);
-                beltMotor.rotateTo(COLOR_POSITIONS[0]);
+            if (!guessCorrect) {
+                // Display the correct sequence if the guess was incorrect
+                displayCorrectSequence();
             }
 
-            // Display correct sequence
+            // Ask for replay or exit
             LCD.clear();
-            LCD.drawString("Correct sequence:", 0, 0);
-            for (int i = 0; i < CORRECT_SEQUENCE.length; i++) {
-                LCD.drawString(getColorName(CORRECT_SEQUENCE[i]), 0, i + 1);
+            LCD.drawString("Press ENTER to replay", 0, 5);
+            LCD.drawString("ESC to exit", 0, 6);
+            int buttonPress = Button.waitForAnyPress();
+            if (buttonPress == Button.ID_ESCAPE) {
+                break; // Exit the while loop and end the program
             }
-            Delay.msDelay(10000); // Display the correct sequence for a while
-
-            // Reset for next round or exit
-            if (Button.ESCAPE.isDown()) {
-                break; // Exit program
-            }
-
-            tries++;
-            LCD.clear();
-            Delay.msDelay(2000); // Wait before the next attempt
         }
     }
 
@@ -157,6 +167,22 @@ public class ColorSorterRobot {
         while (beltMotor.isMoving()) {
             Delay.msDelay(100);
         }
+    }
+    
+    
+    private static boolean checkGuess(int[] userSequence) {
+        // Here, implement the logic to check if the user's guess is correct.
+        // This is a placeholder implementation.
+        return false; // For now, it always returns false.
+    }
+
+    private static void displayCorrectSequence() {
+        LCD.clear();
+        LCD.drawString("Correct sequence:", 0, 0);
+        for (int i = 0; i < CORRECT_SEQUENCE.length; i++) {
+            LCD.drawString(getColorName(CORRECT_SEQUENCE[i]), 0, i + 1);
+        }
+        Delay.msDelay(4000); // Display the correct sequence for a while
     }
 
 
