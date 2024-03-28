@@ -36,22 +36,32 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
     private EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
 
     private final int MAX_OBJECTS = 4; // Only allows user to scan four pieces at a time 
-    private final int[] COLOR_POSITIONS = {0, 250, 450, 500}; // Positions for sorting based on the correctness of the guess 
+    private final int[] COLOR_POSITIONS = {0, 250, 450, 500}; // Positions for sorting based on the correctness of the guess
     private int[] correctSequence; // Array to store the correct color sequence 
     private int tries = 0;
-    private final int MAX_TRIES = 4; // Max number of tries
+    private final int MAX_TRIES = 3; // Max number of tries
     private boolean guessCorrect = false; // Flag to indicate if the user's guess is correct 
 
     public static void main(String[] args) {
-        WordleGame game = new WordleGame(); // Creates an instance of WordleGame and start the game 
-        game.run();
+        try {
+            WordleGame game = new WordleGame(); // Creates an instance of WordleGame and start the game 
+            game.run();
+        } catch (Exception e) {
+            LCD.clear();
+            LCD.drawString("Error:", 0, 0);
+            LCD.drawString(e.getMessage(), 0, 1);
+        }
     }
-    
 
     public void run() {
+      try {
+    	  
+	    if (checkBatteryAndDisplayIfLow()) {
+	        return; // Exit the program if battery is low
+	    }
         // Welcome screen
         LCD.clear();
-        LCD.drawString("Welcome to Wordle", 0, 0);
+        LCD.drawString("Welcome to Wordle v1.4", 0, 0);
         LCD.drawString("Tayib, Brilanta,", 0, 1);
         LCD.drawString("Aymen, Ishfaq", 0, 2);
         LCD.drawString("Press any button to start", 0, 4);
@@ -59,12 +69,16 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
         LCD.clear();
 
         while (true) {
+        	
+            if (checkBatteryAndDisplayIfLow()) {
+                break; // Break out of the game loop if the battery is low
+            }
             correctSequence = createSequence(); // Generates a random color sequence 
             tries = 0; // Resets the number of tries 
             guessCorrect = false; // Resets the guess status 
 
             while (tries < MAX_TRIES && !guessCorrect) {
-                // Resets motors and variables 
+		// Resets motors and variables 
                 resetMotors();
                 int[] userSequence = new int[MAX_OBJECTS];
                 LCD.clear();
@@ -78,7 +92,7 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
 
                     if (Button.LEFT.isDown()) { // Allows user to re-scan a piece if left button is pressed 
                         if (colorCount > 0) {
-                            colorCount--; // Decrements the color count 
+                            colorCount--;
                             LCD.clear();
                             LCD.drawString("Last scan removed", 0, 0);
                             Delay.msDelay(1000);
@@ -88,7 +102,7 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
                     }
 
                     int color = getColorID(); // Retrieves the color ID from the color sensor 
-                    if (color != -1) { // If the color is not recognised: 
+                    if (color != -1) { // If the color is recognised: 
                         userSequence[colorCount] = color; // Stores the color in the user's sequence array 
                         LCD.clear();
                         LCD.drawString(getColorName(color), 0, 0); // Displays color name on LCD screen 
@@ -106,37 +120,59 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
                 guessCorrect = checkGuess(userSequence); // Checks if user's guess is correct
                 tries++; // Increments the number of tries 
             }
-
-            // Displays the result of the guess 
+	
             if (guessCorrect) {
                 LCD.clear();
                 LCD.drawString("Well done!", 0, 0);
-                LCD.drawString("You Guessed Right!", 0, 1);
+                LCD.drawString("You Guessed Right!", 0, 1);  // Displays the result of the guess 
             } else {
                 displayCorrectSequence();
                 LCD.clear();
                 LCD.drawString("You failed!", 0, 0);
             }
-
-            // Prompts user to replay or exit 
-            LCD.drawString("Press ENTER ", 0, 5);
+	
+            LCD.drawString("Press ENTER ", 0, 5); // Prompts user to replay or exit 
             LCD.drawString("to Replay ", 0, 6);
             LCD.drawString("ESC to exit", 0, 7);
             int buttonPress = Button.waitForAnyPress(); // Waits for a button to be pressed 
-            if (buttonPress == Button.ID_ESCAPE) {
-                break; // Exits loop and ends program if escape button is pressed 
+            if (buttonPress == Button.ID_ESCAPE) { // Exits loop and ends program if escape button is pressed 
+                break;
             }
+        }} catch (Exception e) {
+            displayErrorMessage(e.getMessage());
         }
+    }
+    
+    private boolean checkBatteryAndDisplayIfLow() {
+        double voltage = LocalEV3.get().getPower().getVoltage();
+        if (voltage < 6.0) {
+            LCD.clear();
+            LCD.drawString("Low Battery Voltage", 0, 0);
+            Delay.msDelay(2000); // Display the message for 2 seconds before continuing/returning.
+            return true;
+        }
+        return false;
+    }
+    
+    private void displayErrorMessage(String message) {
+        LCD.clear();
+        LCD.drawString("Error:", 0, 0);
+        LCD.drawString(message, 0, 1);
+        Delay.msDelay(2000); // Show the error for 2 seconds
     }
 
     @Override
     public int getColorID() {
-        return colorSensor.getColorID(); // Returns the color ID detected by the color sensor 
+        try {
+            return colorSensor.getColorID(); // Returns the color ID detected by the color sensor 
+        } catch (Exception e) {
+            displayErrorMessage("Sensor error");
+            return -1; // Returns a default value indicating failure
+        }
     }
 
     @Override
-    public String getColorName(int colorId) {
-        // Returns name of the color corresponding to the given color ID 
+    public String getColorName(int colorId) { // Returns name of the color corresponding to the given color ID 
         switch (colorId) {
             case Color.NONE: return "NONE";
             case Color.BLACK: return "BLACK";
@@ -165,7 +201,7 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
 
     @Override
     public void ejectObject() {
-        feedMotor.rotate(90); // Rotates the feed motor to eject the object 
+        feedMotor.rotate(90);  // Rotates the feed motor to eject the object 
         Delay.msDelay(500);
         feedMotor.rotate(-90); // Rotates the feed motor back to the original position 
     }
@@ -204,7 +240,7 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
         Random rnd = new Random();
         for (int i = array.length - 1; i > 0; i--) {
             int index = rnd.nextInt(i + 1); // Generates a random index within the array bounds 
-            int temp = array[index]; // Swaps the elements 
+            int temp = array[index];  // Swaps the elements 
             array[index] = array[i];
             array[i] = temp;
         }
@@ -212,7 +248,7 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
 
     @Override
     public void compareAndSortColor(int[] userSequence, int index) {
-        int colorId = userSequence[index]; // Retrieves the color ID from the user's sequence 
+        int colorId = userSequence[index]; // Retrieves the color ID from the user's sequence
         int correctColor = correctSequence[index]; // Retrieves the correct color from the correct sequence 
         int position;
 
@@ -236,7 +272,7 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
     private boolean containsColor(int colorId) {
         for (int color : correctSequence) {
             if (colorId == color) {
-                return true;  // Returns true if the correct sequence contains the specified color
+                return true; // Returns true if the correct sequence contains the specified color
             }
         }
         return false; // Returns false if the correct sequence does not contain the specified color
