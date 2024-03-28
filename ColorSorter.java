@@ -11,7 +11,7 @@ import lejos.hardware.sensor.EV3TouchSensor;
 import lejos.robotics.Color;
 import lejos.utility.Delay;
 
-public class ABC {
+public class Wordle {
     private static EV3LargeRegulatedMotor beltMotor = new EV3LargeRegulatedMotor(MotorPort.D);
     private static EV3LargeRegulatedMotor feedMotor = new EV3LargeRegulatedMotor(MotorPort.A);
     private static EV3TouchSensor touchSensor = new EV3TouchSensor(LocalEV3.get().getPort("S1"));
