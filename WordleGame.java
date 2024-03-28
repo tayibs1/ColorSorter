@@ -198,14 +198,13 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
             Delay.msDelay(100); // Delays for 100 milliseconds 
         }
     }
-
+	
     @Override
     public void ejectObject() {
         feedMotor.rotate(90);  // Rotates the feed motor to eject the object 
         Delay.msDelay(500);
         feedMotor.rotate(-90); // Rotates the feed motor back to the original position 
     }
-
     @Override
     public boolean checkGuess(int[] userSequence) {
         if (userSequence.length != correctSequence.length) {
