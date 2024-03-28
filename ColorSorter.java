@@ -17,7 +17,7 @@ public class ColorSorter{
     private static EV3TouchSensor touchSensor = new EV3TouchSensor(LocalEV3.get().getPort("S1"));
     private static EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
 
-    private static final int MAX_OBJECTS = 4; //Defines the maximum number of objects the user is allowed to scan 
+    private static final int MAX_OBJECTS = 4; // Defines the maximum number of objects the user is allowed to scan 
     private static final int[] COLOR_POSITIONS = {0, 150, 330, 500}; // Defines positions for each color in the order of red, green, blue, yellow
 
 
