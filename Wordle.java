@@ -20,10 +20,19 @@ public class Wordle {
     private static final int[] COLOR_POSITIONS = {0, 250, 450, 500}; // Correct position, correct color but wrong position, wrong color, initial position
     private static int[] CORRECT_SEQUENCE;
     private static int tries = 0;
-    private static final int MAX_TRIES = 3; // Maximum number of tries
+    private static final int MAX_TRIES = 4; // Maximum number of tries
     private static boolean guessCorrect = false;
 
     public static void main(String[] args) {
+        // Welcome screen
+        LCD.clear();
+        LCD.drawString("Welcome to Wordle", 0, 0);
+        LCD.drawString("Tayib, Brilanta,", 0, 1);
+        LCD.drawString("Aymen, Ishfaq", 0, 2);
+        LCD.drawString("Press any button to start", 0, 4);
+        Button.waitForAnyPress();
+        LCD.clear();
+
         while (true) { // Allows multiple rounds of guessing
             CORRECT_SEQUENCE = createSequence();
             tries = 0; // Reset tries for the new round
@@ -82,7 +91,8 @@ public class Wordle {
             if (guessCorrect) {
                 // Display the success message if the guess was correct
                 LCD.clear();
-                LCD.drawString("Well done you guessed correctly!", 0, 0);
+                LCD.drawString("Well done!", 0, 0);
+                LCD.drawString("You Guessed Right!", 0, 1);
             } else {
                 // Display the correct sequence if the guess was incorrect
                 displayCorrectSequence();
@@ -92,8 +102,9 @@ public class Wordle {
             }
 
             // Ask for replay or exit
-            LCD.drawString("Press ENTER to replay", 0, 5);
-            LCD.drawString("ESC to exit", 0, 6);
+            LCD.drawString("Press ENTER ", 0, 5);
+            LCD.drawString("to Reply ", 0, 6);
+            LCD.drawString("ESC to exit", 0, 7);
             int buttonPress = Button.waitForAnyPress();
             if (buttonPress == Button.ID_ESCAPE) {
                 break; // Exit the while loop and end the program
@@ -101,6 +112,7 @@ public class Wordle {
 
         }
     }
+
 
     public static int[] createSequence() {
         int[] sequence = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
