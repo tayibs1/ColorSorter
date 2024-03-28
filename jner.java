@@ -61,7 +61,7 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
 	    }
         // Welcome screen
         LCD.clear();
-        LCD.drawString("Welcome to Wordle", 0, 0);
+        LCD.drawString("Welcome to Wordle v1.4", 0, 0);
         LCD.drawString("Tayib, Brilanta,", 0, 1);
         LCD.drawString("Aymen, Ishfaq", 0, 2);
         LCD.drawString("Press any button to start", 0, 4);
