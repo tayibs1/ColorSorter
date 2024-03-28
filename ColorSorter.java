@@ -11,53 +11,63 @@ import lejos.hardware.sensor.EV3TouchSensor;
 import lejos.robotics.Color;
 import lejos.utility.Delay;
 
-public class ColorSorter{
+public class ABC {
     private static EV3LargeRegulatedMotor beltMotor = new EV3LargeRegulatedMotor(MotorPort.D);
     private static EV3LargeRegulatedMotor feedMotor = new EV3LargeRegulatedMotor(MotorPort.A);
     private static EV3TouchSensor touchSensor = new EV3TouchSensor(LocalEV3.get().getPort("S1"));
     private static EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
 
-    private static final int MAX_OBJECTS = 4; // Defines the maximum number of objects the user is allowed to scan 
+    private static final int MAX_OBJECTS = 4; // Defines the maximum number of objects the user is allowed to scan
     private static final int[] COLOR_POSITIONS = {0, 150, 330, 500}; // Defines positions for each color in the order of red, green, blue, yellow
 
-
     public static void main(String[] args) {
-        while (true) { // Allows the user to scan four pieces multiple times 
+        showWelcomeScreen(); // Displays the welcome screen and waits for any button press to continue
+        
+        while (true) { // Allows the user to scan four pieces multiple times
             // Initialise
-            resetMotors(); // Resets motors for new round 
-            int[] colorList = new int[MAX_OBJECTS]; // Initialises array to store colors 
-            int colorCount = 0; // Initialises the color count 
+            resetMotors(); // Resets motors for new round
+            int[] colorList = new int[MAX_OBJECTS]; // Initialises array to store colors
+            int colorCount = 0; // Initialises the color count
 
             // Scanning loop
-            while (colorCount < MAX_OBJECTS && !Button.ENTER.isDown()) { // Loops until the user has scanned four pieces or the Enter button is pressed 
+            while (colorCount < MAX_OBJECTS && !Button.ENTER.isDown()) { // Loops until the user has scanned four pieces or the Enter button is pressed
                 if (Button.ESCAPE.isDown()) {
-                    return; // Exit program immediately if ESCAPE button is pressed 
+                    return; // Exit program immediately if ESCAPE button is pressed
                 }
-                int color = getColor(); // Gets color from the color sensor 
+                int color = getColor(); // Gets color from the color sensor
                 if (color != -1) { // -1 means no colour or unrecognised colour
-                    colorList[colorCount++] = color; // Stores the color in a list 
-                    beepOnce(); // Emits a beep sound everytime a color has been scanned 
+                    colorList[colorCount++] = color; // Stores the color in a list
+                    beepOnce(); // Emits a beep sound every time a color has been scanned
                 }
-                Delay.msDelay(1000); // Delays for 1000 milliseconds 
+                Delay.msDelay(1000); // Delays for 1000 milliseconds
             }
 
             // Sorting loop
-            for (int i = 0; i < colorCount; i++) { // Loops through the detected colors 
-                sortColor(colorList[i]); // Sorts each detected color 
-                ejectObject(); 
+            for (int i = 0; i < colorCount; i++) { // Loops through the detected colors
+                sortColor(colorList[i]); // Sorts each detected color
+                ejectObject();
             }
-            
 
             moveToColorPosition(0); // Moves to start position after sorting
 
-            // Check for escape button press to exit or continue for a new round of scanning and sorting
             if (Button.ESCAPE.isDown()) {
                 break; // Exit program
             }
 
-            LCD.clear(); // Ensures the LCD screen has been cleared 
+            LCD.clear(); // Ensures the LCD screen has been cleared
             Delay.msDelay(1000);
         }
+    }
+
+    private static void showWelcomeScreen() {
+        LCD.clear();
+        LCD.drawString("Welcome to the", 0, 0);
+        LCD.drawString("Color Sorter v1.4", 0, 1);
+        LCD.drawString("Tayib, Brilanta,", 0, 3);
+        LCD.drawString("Aymen & Ishfaq", 0, 4);
+        LCD.drawString("Press any button", 0, 6);
+        LCD.drawString("to start", 0, 7);
+        Button.waitForAnyPress(); // Waits for any button press to continue
     }
 
     private static void resetMotors() {
