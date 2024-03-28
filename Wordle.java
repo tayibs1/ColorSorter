@@ -11,7 +11,7 @@ import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.Color;
 import lejos.utility.Delay;
 
-public class ColorSorterRobot {
+public class Wordle {
     private static EV3LargeRegulatedMotor beltMotor = new EV3LargeRegulatedMotor(MotorPort.D);
     private static EV3LargeRegulatedMotor feedMotor = new EV3LargeRegulatedMotor(MotorPort.A);
     private static EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
@@ -79,19 +79,26 @@ public class ColorSorterRobot {
                 Delay.msDelay(2000);
             }
 
-            if (!guessCorrect) {
+            if (guessCorrect) {
+                // Display the success message if the guess was correct
+                LCD.clear();
+                LCD.drawString("Well done you guessed correctly!", 0, 0);
+            } else {
                 // Display the correct sequence if the guess was incorrect
                 displayCorrectSequence();
+                // Display the failure message
+                LCD.clear();
+                LCD.drawString("You failed!", 0, 0);
             }
 
             // Ask for replay or exit
-            LCD.clear();
             LCD.drawString("Press ENTER to replay", 0, 5);
             LCD.drawString("ESC to exit", 0, 6);
             int buttonPress = Button.waitForAnyPress();
             if (buttonPress == Button.ID_ESCAPE) {
                 break; // Exit the while loop and end the program
             }
+
         }
     }
 
@@ -171,10 +178,19 @@ public class ColorSorterRobot {
     
     
     private static boolean checkGuess(int[] userSequence) {
-        // Here, implement the logic to check if the user's guess is correct.
-        // This is a placeholder implementation.
-        return false; // For now, it always returns false.
+        if (userSequence.length != CORRECT_SEQUENCE.length) {
+            return false; // The lengths of the sequences must match
+        }
+        
+        for (int i = 0; i < CORRECT_SEQUENCE.length; i++) {
+            if (userSequence[i] != CORRECT_SEQUENCE[i]) {
+                return false; // If any color in the sequence doesn't match, the guess is incorrect
+            }
+        }
+        
+        return true; // If all colors match in the correct order, the guess is correct
     }
+
 
     private static void displayCorrectSequence() {
         LCD.clear();
