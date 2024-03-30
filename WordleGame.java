@@ -281,3 +281,4 @@ public class WordleGame implements ColorScanner, MotorController, GameLogic {
         Sound.playTone(1000, 100); // Emits a beep sound of 1000 Hz for 100 milliseconds 
     }
 }
+
