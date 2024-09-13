@@ -1,4 +1,4 @@
-README
+
 The 
 ColorSorter.java file contains the code for just the scanning and sorting of 
 four pieces at a time. The 
